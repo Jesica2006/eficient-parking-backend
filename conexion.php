@@ -1,16 +1,13 @@
 <?php
-$host = "localhost";
-$user = "root";
-$pass = "";
-$db = "eficientparkinglot";
+$host = getenv("MYSQLHOST");
+$port = getenv("MYSQLPORT");
+$user = getenv("MYSQLUSER");
+$pass = getenv("MYSQLPASSWORD");
+$db   = getenv("MYSQLDATABASE");
 
-$conn = new mysqli($host, $user, $pass, $db);
+$conexion = new mysqli($host, $user, $pass, $db, (int)$port);
 
-if ($conn->connect_error) {
-    die("Error de conexión: " . $conn->connect_error);
+if ($conexion->connect_error) {
+    die("Error de conexión: " . $conexion->connect_error);
 }
-
-// 🔥 FORZAR ZONA HORARIA
-date_default_timezone_set("America/Bogota");
-$conn->query("SET time_zone = '-05:00'");
 ?>

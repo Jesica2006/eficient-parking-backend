@@ -1,0 +1,36 @@
+<?php
+
+header("Content-Type: application/json");
+include "conexion.php";
+
+$data = json_decode(file_get_contents("php://input"), true);
+
+$placa = strtoupper(trim($data["placa"] ?? ""));
+
+$sql = "SELECT * FROM usuarios WHERE placa = ? LIMIT 1";
+
+$stmt = $conexion->prepare($sql);
+$stmt->bind_param("s", $placa);
+$stmt->execute();
+
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
+
+    $usuario = $result->fetch_assoc();
+
+    echo json_encode([
+        "success" => true,
+        "registrado" => true,
+        "usuario" => $usuario
+    ]);
+
+} else {
+
+    echo json_encode([
+        "success" => true,
+        "registrado" => false
+    ]);
+
+}
+?>

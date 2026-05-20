@@ -1,34 +1,56 @@
 <?php
+
 header("Content-Type: application/json");
 include "conexion.php";
 
-// 🔥 LIBERAR ESPACIOS EXPIRADOS
+/* =========================
+   Liberar espacios expirados
+========================= */
 $conn->query("
     UPDATE espacios 
-    SET disponible = 1,
+    SET 
+        disponible = 1,
         estado = 'libre',
         horaInicio = NULL,
         tiempoLimite = NULL,
         cedula = NULL
     WHERE tiempoLimite IS NOT NULL 
-    AND tiempoLimite <= NOW()
+      AND tiempoLimite <= NOW()
 ");
 
-// 🔥 CONSULTA
-$sql = "SELECT e.*, u.nombre 
-        FROM espacios e
-        LEFT JOIN usuarios u ON e.cedula = u.cedula
-        ORDER BY e.zonaId ASC, e.numero ASC";
+/* =========================
+   Consulta principal
+========================= */
+$sql = "
+    SELECT 
+        e.*, 
+        u.nombre,
+        z.nombre AS nombreZona,
+        z.tipoVehiculo AS tipoZona
+    FROM espacios e
+    LEFT JOIN usuarios u 
+        ON e.cedula = u.cedula
+    LEFT JOIN zonas z 
+        ON e.zonaId = z.id
+    ORDER BY 
+        e.zonaId ASC, 
+        e.numero ASC
+";
 
 $result = $conn->query($sql);
 
-$libres = [];
-$ocupados = [];
-$porVencer = [];
+/* =========================
+   Arrays
+========================= */
+$libres     = [];
+$ocupados   = [];
+$porVencer  = [];
 
+/* =========================
+   Procesar
+========================= */
 while ($row = $result->fetch_assoc()) {
 
-    // 🔥 SI ESTÁ OCUPADO Y TIENE TIEMPO
     if ($row['estado'] === 'ocupado' && !empty($row['tiempoLimite'])) {
 
         $segundos = strtotime($row['tiempoLimite']) - time();
@@ -38,9 +60,11 @@ while ($row = $result->fetch_assoc()) {
 
         if ($segundos <= 0) {
             $libres[] = $row;
-        } else if ($segundos <= 300) {
+        } 
+        else if ($segundos <= 300) {
             $porVencer[] = $row;
-        } else {
+        } 
+        else {
             $ocupados[] = $row;
         }
 
@@ -52,11 +76,10 @@ while ($row = $result->fetch_assoc()) {
 }
 
 echo json_encode([
-    "success" => true,
-    "libres" => $libres,
-    "ocupados" => $ocupados,
-    "porVencer" => $porVencer
+    "success"    => true,
+    "libres"     => $libres,
+    "ocupados"   => $ocupados,
+    "porVencer"  => $porVencer
 ]);
 
 $conn->close();
-?>

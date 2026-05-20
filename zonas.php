@@ -1,6 +1,4 @@
 <?php
-error_reporting(0);
-ini_set('display_errors', 0);
 header("Content-Type: application/json");
 include "conexion.php";
 
@@ -9,13 +7,13 @@ $result = $conn->query($sql);
 
 $zonas = [];
 
-if ($result && $result->num_rows > 0) {
-    while($row = $result->fetch_assoc()) {
-        $zonas[] = $row;
-    }
+while ($row = $result->fetch_assoc()) {
+    $zonas[] = $row;
 }
 
-echo json_encode($zonas);
+echo json_encode([
+    "success" => true,
+    "zonas" => $zonas
+]);
 
 $conn->close();
-?>

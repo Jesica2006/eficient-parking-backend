@@ -1,10 +1,16 @@
 <?php
-// 🔥 CONFIGURACIÓN
+
+/* =========================
+   Configuración
+========================= */
 error_reporting(0);
 ini_set('display_errors', 0);
+
 header("Content-Type: application/json");
 
-// 🔥 VALIDAR MÉTODO
+/* =========================
+   Validar método HTTP
+========================= */
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode([
         "success" => false,
@@ -13,11 +19,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// 🔥 CONEXIÓN
+/* =========================
+   Conexión a la base de datos
+========================= */
 $servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "eficientparkinglot";
+$username   = "root";
+$password   = "";
+$dbname     = "eficientparkinglot";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
@@ -29,11 +37,15 @@ if ($conn->connect_error) {
     exit;
 }
 
-// 🔥 RECIBIR DATOS
-$cedula = $_POST['cedula'] ?? '';
+/* =========================
+   Recibir datos
+========================= */
+$cedula  = $_POST['cedula'] ?? '';
 $password = $_POST['password'] ?? '';
 
-// 🔥 VALIDAR DATOS VACÍOS
+/* =========================
+   Validar datos
+========================= */
 if (empty($cedula) || empty($password)) {
     echo json_encode([
         "success" => false,
@@ -42,40 +54,46 @@ if (empty($cedula) || empty($password)) {
     exit;
 }
 
-// 🔥 QUERY SEGURA (RECOMENDADO)
-$stmt = $conn->prepare("SELECT * FROM usuarios WHERE cedula = ? AND password = ?");
+/* =========================
+   Consulta segura (Prepared Statement)
+========================= */
+$stmt = $conn->prepare(
+    "SELECT * FROM usuarios WHERE cedula = ? AND password = ?"
+);
+
 $stmt->bind_param("ss", $cedula, $password);
 $stmt->execute();
 
 $result = $stmt->get_result();
 
-// 🔥 RESPUESTA
+/* =========================
+   Procesar respuesta
+========================= */
 if ($result && $result->num_rows > 0) {
-
     $user = $result->fetch_assoc();
 
     echo json_encode([
         "success" => true,
         "user" => [
-            "cedula" => $user['cedula'],
-            "nombre" => $user['nombre'],
-            "placa" => $user['placa'],
-            "tipoVehiculo" => $user['tipoVehiculo'],
-            "rol" => trim(strtolower($user['rol'])), // 🔥 normalizado
-            "zona" => $user['zona']
+            "cedula"        => $user['cedula'],
+            "nombre"        => $user['nombre'],
+            "placa"         => $user['placa'],
+            "tipoVehiculo"  => $user['tipoVehiculo'],
+            "rol"           => trim(strtolower($user['rol'])), // normalizado
+            "zona"          => $user['zona']
         ]
     ]);
-
 } else {
-
-    // 🔥 SIEMPRE RESPONDER (esto evita tu error)
     echo json_encode([
         "success" => false,
         "message" => "Credenciales incorrectas"
     ]);
 }
 
-// 🔥 CERRAR CONEXIÓN
+/* =========================
+   Cerrar conexión
+========================= */
 $stmt->close();
 $conn->close();
+
 ?>

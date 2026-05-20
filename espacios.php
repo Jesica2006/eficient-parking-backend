@@ -1,4 +1,4 @@
-<?php
+<?php 
 error_reporting(0);
 ini_set('display_errors', 0);
 header("Content-Type: application/json");
@@ -13,44 +13,45 @@ if ($conexion->connect_error) {
     exit;
 }
 
-// 🔥 LIBERAR ESPACIOS VENCIDOS AUTOMÁTICAMENTE
+// 🔥 LIBERAR ESPACIOS VENCIDOS
 $conexion->query("
     UPDATE espacios 
     SET disponible = 1,
         estado = 'libre',
         horaInicio = NULL,
-        tiempoLimite = NULL
+        tiempoLimite = NULL,
+        cedula = NULL
     WHERE tiempoLimite IS NOT NULL 
     AND tiempoLimite < NOW()
 ");
 
-
-
 // 🔥 RECIBIR JSON
 $data = json_decode(file_get_contents("php://input"), true);
 
-$zona = $data['zona'] ?? null;
-$tipoVehiculo = $data['tipoVehiculo'] ?? null;
+// 🔥 NORMALIZAR
+$zona = isset($data['zona']) ? intval($data['zona']) : null;
+$tipoVehiculo = isset($data['tipoVehiculo']) 
+    ? strtolower(trim($data['tipoVehiculo'])) 
+    : null;
 
-// 🔥 VALIDACIÓN
-if (!$zona || !$tipoVehiculo) {
+// 🔥 VALIDACIÓN CORRECTA
+if ($zona === null || $tipoVehiculo === null || $tipoVehiculo === "") {
     echo json_encode([
         "success" => false,
-        "message" => "Datos incompletos"
+        "message" => "Datos incompletos",
+        "debug" => $data
     ]);
     exit;
 }
 
-// 🔥 QUERY CORRECTA SEGÚN TU BD
+// 🔥 QUERY
 $sql = "SELECT * FROM espacios 
         WHERE zonaId = ? 
-        AND tipoVehiculo = ? 
-        AND disponible = 1
+        AND tipoVehiculo = ?
         ORDER BY numero ASC";
 
 $stmt = $conexion->prepare($sql);
 
-// 🚨 SI FALLA LA QUERY
 if (!$stmt) {
     echo json_encode([
         "success" => false,
@@ -77,5 +78,4 @@ echo json_encode([
 
 $stmt->close();
 $conexion->close();
-
 ?>
